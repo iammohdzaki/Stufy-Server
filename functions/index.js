@@ -29,27 +29,31 @@ const db = admin.firestore()
  exports.getEventsByUser = functions.https.onRequest((request,response) =>{
      let events=[]
 
-     let query= db.collection("users").where('userId','==',request.body.userId).get()
+     console.log(request.body.userId)
+     db.collection("users").doc(request.body.userId).get()
      .then(snapshot =>{
-         if(snapshot.empty){
-            response.json('No Data Found.');
+         if(!snapshot.exists){
+            response.json(CONFIG.defaultErrorJSON);
             return;
-         }
-
-         snapshot.collection('events').get()
-         .then(snapshot =>{
-            if(snapshot.empty){
-                response.json()
-                return;
-            }
-            snapshot.forEach(doc =>{
-                events.push(doc.data())
+         }else{
+            db.collection('users').doc(request.body.userId).collection('events').get()
+            .then(snapshot =>{
+               if(snapshot.empty){
+                   response.json({
+                       statusCode: 400,
+                       message: "No data Found!"
+                    })
+                   return;
+               }
+               snapshot.forEach(doc =>{
+                   events.push(doc.data())
+               })
+               response.json(events)
             })
-            response.json(events)
-         })
-         .catch(error => {
-             response.json('Something went wrong!')
-         })
+            .catch(error => {
+                response.json(CONFIG.defaultErrorJSON)
+            })
+         }
 
      })
      .catch(error=> {
