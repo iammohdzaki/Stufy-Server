@@ -16,7 +16,7 @@ const db = admin.firestore()
      .get()
      .then(snapshot =>{
          snapshot.forEach(doc =>{
-             events.push(doc.data())
+                events.push(doc.data())
          })
          response.json(events);
      })
@@ -26,39 +26,24 @@ const db = admin.firestore()
  });
 
 
+ /**
+  * Returns Events By User ID - Manager App
+  */
  exports.getEventsByUser = functions.https.onRequest((request,response) =>{
      let events=[]
 
      console.log(request.body.userId)
-     db.collection("users").doc(request.body.userId).get()
-     .then(snapshot =>{
-         if(!snapshot.exists){
-            response.json(CONFIG.defaultErrorJSON);
-            return;
-         }else{
-            db.collection('users').doc(request.body.userId).collection('events').get()
-            .then(snapshot =>{
-               if(snapshot.empty){
-                   response.json({
-                       statusCode: 400,
-                       message: "No data Found!"
-                    })
-                   return;
-               }
-               snapshot.forEach(doc =>{
-                   events.push(doc.data())
-               })
-               response.json(events)
-            })
-            .catch(error => {
-                response.json(CONFIG.defaultErrorJSON)
-            })
-         }
 
+     db.collection('events').where('userId','==',request.body.userId).get()
+     .then(snapshot =>{
+         snapshot.forEach(doc =>{
+             events.push(doc.data())
+         })
+         response.json(events)
      })
      .catch(error=> {
-         response.json(error)
-     })
+        response.json(error)
+    })
  })
 
 
