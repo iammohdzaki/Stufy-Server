@@ -15,10 +15,30 @@ const db = admin.firestore()
      db.collection('events')
      .get()
      .then(snapshot =>{
-         snapshot.forEach(doc =>{
-                events.push(doc.data())
+        snapshot.forEach(doc =>{
+            events.push(doc.data())
+        })
+
+        for(var i in events){
+            events[i]["isJoined"]=0
+        }
+        /* db.collection('participants').where('userId','==',request.body.userId).get()
+         .then(snapshot => {
+            for(var i in events){
+                snapshot.forEach(doc =>{
+                    if(events[i].eventId == doc.data().eventId){
+                        events[i].isJoined = 1
+                    }else{
+                        events[i].isJoined = 0
+                    }
+                })
+            }
+            response.json(events);
          })
-         response.json(events);
+         .catch(error =>{
+            response.json(error);
+        })*/
+        response.json(events);
      })
      .catch(error =>{
          response.json(error);
@@ -46,4 +66,58 @@ const db = admin.firestore()
     })
  })
 
+ /**
+  * Participate in a Event - Stufy Customer
+  */
+ exports.participateInEvent = functions.https.onRequest((request,response) =>{
+     let participantRef=db.collection('participants') 
+     let participateid= participantRef.doc().id
+
+     let data = {
+         participateId : participateid,
+         userId : request.body.userId,
+         eventId : request.body.eventId
+     }
+
+     participantRef.doc(participateid).set(data)
+     .then(ref => {
+         response.json("Participated Successfully!")
+     })
+     .catch(error => {
+        response.json(error)
+     })
+    
+ })
+ 
+ /**
+  * Get User Data
+  */
+ exports.getUserData = functions.https.onRequest((request,response) => {
+     db.collection('users').doc(request.body.userId).get()
+     .then(snapshot =>{
+         console.log(snapshot.data())
+         response.json(snapshot.data())
+     })
+     .catch(error => {
+         response.json(error)
+     })
+ })
+
+ /**
+  * Get Events By Category
+  */
+ exports.getEventsByCategory = functions.https.onRequest((request,response) => {
+     let events=[]
+     db.collection('events').where('eventcategory','==',request.body.eventcategory).get()
+     .then(snapshot => {
+        snapshot.forEach(doc =>{
+            events.push(doc.data())
+        })
+        response.json(events)
+     })
+     .catch(error => {
+         response.json(error)
+     })
+ })
+ 
 
